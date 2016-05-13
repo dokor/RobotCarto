@@ -36,7 +36,7 @@ typedef enum {
 //#define 	GYRO
 #define 	RPLIDAR
 #define 	WIFI
-#define		COMPAS
-#define		HMC5883L_VALIDATION 
+// #define		COMPAS
+//#define		HMC5883L_VALIDATION 
 #endif
 

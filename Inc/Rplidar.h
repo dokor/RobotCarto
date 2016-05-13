@@ -32,6 +32,14 @@ typedef  struct {
 #define		MAX_SCAN_DANS_BUFFER	333
 	
 
+		/* Définition d'un point utilisé par Guidage.c et les recherches dans Rplidar.c */
+typedef struct {
+	float		Angle ;
+	float		Distance ;
+} T_Angle_Distance ;
+
+
+
 	/* Les codes du Status_Moteur_Lidar */
 #define		RPLIDAR_NO_ERROR 									0x00
 #define		RPLIDAR_WARNING										0x01
@@ -50,7 +58,7 @@ extern  int16_t					Offset_Orientation_Lidar ;
 
 
 extern T_Boolean Rplidar_New_Scan ( void) ;
-extern void Rplidar_Get_Distance ( float *Distance, float *Angle ) ;
+extern void Rplidar_Get_Distance ( T_Angle_Distance *AngleDistance ) ;
 
 
 extern void Rplidar_Gestion (void) ;

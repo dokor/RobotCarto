@@ -17,6 +17,11 @@ typedef struct {// Structure asservissement position
 	float		CoefI;
 	float		CoefD;
 	float		NotUsed3;
+	float		NotUsed4;
+	float		NotUsed5;
+	float		NotUsed6;
+	float		NotUsed7;	
+	float		NotUsed8;
 } T_Suivi_De_Mur;
 
 extern T_Suivi_De_Mur  Suivi_De_Mur;

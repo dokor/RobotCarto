@@ -90,7 +90,7 @@ T_BufMessageLong 		BufMessageScan ;
 volatile T_Boolean New_Scan_Disponible = FAUX ; 
 
 /* Contient les indices des 4 angles droits */
-uint16_t						Quatre_Angles [4] ;
+uint16_t						Huit_Angles [8] ;
 
 	/* Pour réception des données issues du Lidar */
 #define							TAILLE_BUF_REC		3020					// Au maximum il y a moins de 300 scans (293) à la vitesse de rotation du moteur soit 1500 octets * 2 + 20
@@ -103,6 +103,7 @@ uint16_t						Indice_Debut_Lecture  ;
 uint8_t    					Transmission_Rate_Request ; 
 uint8_t    					Transmission_Rate ; 
 T_Boolean 					Premiere_Reception ;
+
 
 	/* On et Off du moteur */
 static void	Rplidar_Moteur (T_MarcheArret Etat)
@@ -142,21 +143,34 @@ static T_Boolean Rplidar_Cherche_Debut_360 ( uint16_t *A_partir_De, uint16_t Jus
 }
 
 
-/* Avec suppression du superflux et compensation de l'angle */
-static 	T_Boolean	Charge_Data_Scan ( T_Scan *Scan, uint8_t *Data , uint16_t Angle_Recherche) 
+/* Avec suppression du superflux et compensation de l'angle 
+	retourne 	ERREUR si qualité = 0 
+						OUI si Angle_Recherche est trouvé
+						NON si pas trouvé 			*/
+static 	T_OuiNonErreur	Charge_Data_Scan ( T_Scan *Scan, uint8_t *Data , uint16_t Angle_Recherche) 
 {
-	Scan->Quality 	=  Data[0] >> 2 ;
-	Scan->Angle   	= (Data[1]) | (Data[2] << 8) ;
-	Scan->Angle    >>= 1 ;
-	if ( Scan->Angle > ( abs(Offset_Orientation_Lidar) << 6 ) )
-		Scan->Angle += ( Offset_Orientation_Lidar << 6 ) ;
-	else
-		Scan->Angle += ( (360 + Offset_Orientation_Lidar ) << 6 ) ;
-	Scan->Distance	=  Data[3] | (Data[4] << 8) ;
-	if ( Angle_Recherche == 0 )
-		return ( Scan->Angle > ( 2 << 6 ) ? FAUX : VRAI ) ;		// pour trouver le 0
-	else
-	  return ( Scan->Angle >= Angle_Recherche ? VRAI : FAUX ) ;	
+	T_OuiNonErreur retour = ERREUR ;   // par défaut 
+	uint16_t  quality = Data[0] >> 2 ;
+	if ( quality != 0 )
+	{
+		Scan->Quality 	=  quality ;
+		Scan->Angle   	= (Data[1]) | (Data[2] << 8) ;
+		Scan->Angle    >>= 1 ;
+		if ( Scan->Angle > ( abs(Offset_Orientation_Lidar) << 6 ) )
+			Scan->Angle += ( Offset_Orientation_Lidar << 6 ) ;
+		else
+			Scan->Angle += ( (360 + Offset_Orientation_Lidar ) << 6 ) ;
+		Scan->Distance	=  Data[3] | (Data[4] << 8) ;
+		if ( Angle_Recherche == 0 )
+		{			
+			retour = Scan->Angle > ( 2 << 6 ) ? NON : OUI ;		// pour trouver le 0
+		}
+		else
+		{
+			retour =  Scan->Angle >= Angle_Recherche ? OUI : NON ;	
+		}
+	}
+	return ( retour ) ;
 }
 
 
@@ -164,7 +178,7 @@ static 	T_Boolean	Charge_Data_Scan ( T_Scan *Scan, uint8_t *Data , uint16_t Angl
 
 static uint16_t Rplidar_Charge_360_Scan ( uint16_t Idc_Buf_Rec, T_Scan *Scan )
 {
-  uint16_t angle_recherche = 3 ; 
+  uint16_t 	angle_recherche = 6 ;   // soit 270°
 	uint16_t	nombre_de_scan = 0 ; 
 	T_Boolean fini = FAUX ;	
 	T_Scan 		*ScanPtr = Scan ;
@@ -173,14 +187,22 @@ static uint16_t Rplidar_Charge_360_Scan ( uint16_t Idc_Buf_Rec, T_Scan *Scan )
 	// Idc_Buf_Rec = Indice du premier octet du premier SCAN NEW_360 
 	do
 	{
-		if ( Charge_Data_Scan ( ScanPtr++ , &Buf_Rec[Idc_Buf_Rec], (angle_recherche * (90 << 6 )) )  == VRAI )
-		{	
-			Quatre_Angles[angle_recherche++] = nombre_de_scan; 
-			angle_recherche &= 0x0003 ; 
-		}			
-		++ nombre_de_scan ;
+		switch (  Charge_Data_Scan ( ScanPtr , &Buf_Rec[Idc_Buf_Rec], (angle_recherche * (45 << 6 )) ) )
+		{
+			case OUI :
+				Huit_Angles[angle_recherche++] = nombre_de_scan; 
+				angle_recherche &= 0x0007 ; 				
+			case NON : 
+				++ScanPtr ; 
+				++ nombre_de_scan ;			
+			break ; 
+				
+			default :
+			case ERREUR :				
+			break ;
+		}		
 		Idc_Buf_Rec += TAILLE_SCAN ;	
-
+		
 		if ( (( Buf_Rec[Idc_Buf_Rec] & START_FLAG_MASK ) == NEXT_360 ) && (( Buf_Rec[Idc_Buf_Rec+1] & CONTROL_ANGLE_MASK) == CONTROL_ANGLE ) )
 		{
 			if ( nombre_de_scan >= MAX_SCAN_DANS_BUFFER )
@@ -282,7 +304,7 @@ void Rplidar_Receive_It (void)
 					{
 						Transmission_Rate = Transmission_Rate_Request ;							
 						WifiCom_Transmit_Transport (&BufMessageScan) ; 		
-					}							
+					}	
 				}
 				else
 				{	// on n'a pas trouvé la fin du scan360 
@@ -394,62 +416,62 @@ T_Boolean Rplidar_New_Scan ( void)
 	return (resu) ;	 
 }
 
-
-void Rplidar_Get_Distance ( float *Distance, float *Angle ) 
+/* paramètre = *Angle correspondant à l'angle recherché 0° à 359° attention pas de décimale !!!!! 
+		retourne distance et angle immédiatement supérieur ou inférieur selon écart / à *Angle */
+void Rplidar_Get_Distance ( T_Angle_Distance *AngleDistance ) 
 {
-	uint16_t idc, indice_debut, indice_fin ;
-	uint16_t nb_scan = BufMessageScan.Total_Octet/ sizeof (T_Scan) ;
+	uint16_t idc, indice_debut, indice_precedent_debut ;
 	uint16_t distance ; 
-	uint16_t angle ; 
-	uint16_t qualite ; 
-	uint16_t angle_recherche = *Angle ; 
-	if ( angle_recherche < 90 ) 
-		idc = 0 ;
-	else
-		if ( angle_recherche < 180 ) 
-			idc = 1 ;
-		else
-			if ( angle_recherche < 270 ) 
-				idc = 2 ;	
+	uint16_t angle, angle_precedent; 
+	uint16_t nb_scan = BufMessageScan.Total_Octet/ sizeof (T_Scan) ;	
+	uint16_t angle_recherche = AngleDistance->Angle ; 
+	T_Boolean found = FAUX ; 
+	
+	/* on se positionne dans le buffer selon la valeur recherchée */
+	idc = angle_recherche / 45 ;
+	indice_debut 	= Huit_Angles[idc] ;
+	indice_precedent_debut =	indice_debut != 0 ? indice_debut - 1 : nb_scan - 1 ;
+	angle = BufMessageScan.Data.Scan[indice_precedent_debut].Angle ;
+	angle_recherche <<= 6 ;	/* formate l'angle selon format d'un scan */
+
+	/* angle donne l'angle exact ou immédiatement supérieur , indice_debut donne sa position 
+		et angle_precedent donne l'angle exact ou immédiatement inférieur, indice_precedent_debut donne sa position*/
+	do {
+			angle_precedent = angle ;
+			angle = BufMessageScan.Data.Scan[indice_debut].Angle ;		
+			if ( angle < angle_recherche )
+			{
+				indice_precedent_debut = indice_debut ;
+				if ( ++indice_debut >= nb_scan )
+					indice_debut = 0 ; 	
+			}	
 			else
-				idc = 3 ;	
-	indice_debut = Quatre_Angles[idc++] ;
-	idc &= 0x0003 ; 
-	indice_fin = Quatre_Angles[idc] ;
-
-	angle_recherche <<= 6 ;
-			
-	do {		
-		
-			angle 	 = BufMessageScan.Data.Scan[indice_debut].Angle ;		
-			distance = BufMessageScan.Data.Scan[indice_debut].Distance ;
-		  qualite = BufMessageScan.Data.Scan[indice_debut].Qualite ;
-		
-			indice_debut ++ ; 
-			if ( indice_debut >= nb_scan )
-				indice_debut = 0 ; 
+			{
+				found = VRAI ; 
+			}
 	}
-	while ( angle < angle_recherche ) ; 
+	while ( ! found ) ;
 	
-
-	//*Qualite    = (float)(qualite) 	;// / 64.0f ;
+	/* déterminer l'angle le plus proche de celui demandé */
+	uint16_t delta_angle_precedent = angle_recherche - angle_precedent ; 	
+	uint16_t delta_angle 					 = angle - angle_recherche ; 	
 	
-	if(qualite > 0.1 ){ //Qualité suffisante pour recuperer les valeurs
-			//Download des valeurs
-			*Angle    = (float)(angle) 		/ 64.0f ;
-			*Distance = (float)(distance) / 4.0f  ;		
+	if ( delta_angle_precedent < delta_angle  )
+	{	/* l'angle inférieur est plus proche aussi on le choisit */
+		indice_debut = indice_precedent_debut ;
 	}
-	else{ //Qualite < 0.1
-		if(*Distance == 0){ //Si la distance précédente n'existe pas, on pose les valeurs a 0
-			*Angle    = 0;
-			*Distance = 0;
-		}
-		else{ //Si la distance précédente existe, on prends les anciennes valeurs
-			*Angle    = *Angle;
-			*Distance = *Distance;
-		}
-	}
+	
+	angle 	 = BufMessageScan.Data.Scan[indice_debut].Angle ;	
+
+	if ( BufMessageScan.Data.Scan[indice_debut].Quality != 0 )	
+		distance = BufMessageScan.Data.Scan[indice_debut].Distance ;		 
+	else
+		distance = 10000 << 2 ;		/* qualité = 0 convention distance = infinie soit 10 m */	
+
+	AngleDistance->Angle    = (float)(angle) 		/ 64.0f ;
+	AngleDistance->Distance = (float)(distance) / 4.0f  ;		
 }
+
 
 
 /* Cette fonction doit être appelée périodiquement */

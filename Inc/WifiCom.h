@@ -125,7 +125,7 @@ typedef struct {
 	T_Compensation_Ligne_Droite Compensation_Ligne_Droite;							// 8 
 	uint16_t 										Distance_Obstacle_Av ;									// 2 
 	uint16_t 										Distance_Obstacle_Ar ;									// 2
-	T_Suivi_De_Mur  						Suivi_De_Mur				;										// 28	// total 144 octets utiles
+	T_Suivi_De_Mur  						Suivi_De_Mur				;										// 48	// total 164 octets utiles
 	uint32_t										Crc ;																							
 } T_Buf_Reglage ;
 #define		TAILLE_MESSAGE_REGLAGE					( sizeof ( T_Buf_Reglage ) - TAILLE_CRC ) 

@@ -138,7 +138,7 @@ T_Boolean WifiCom_Transmit_Transport (T_BufMessageLong *BufMessageLong)
 	return (FAUX) ;
 }
 
-
+extern uint8_t  Etat_Automate_Suivi_Mur ;
 
 HAL_StatusTypeDef WifiCom_Transmit_Reglage ( void )
 {
@@ -160,7 +160,7 @@ HAL_StatusTypeDef WifiCom_Transmit_Reglage ( void )
 		Wifi_Buf_Emi.Reglage.VitesseMesure[MOTEUR_DROIT] 					=  VitesseMesure[MOTEUR_DROIT] ;
 		Wifi_Buf_Emi.Reglage.VitesseMesure[MOTEUR_GAUCHE] 				=  VitesseMesure[MOTEUR_GAUCHE] ;
 		Wifi_Buf_Emi.Reglage.Phare_Luminosite 										=  Phare_Luminosite ;
-		Wifi_Buf_Emi.Reglage.Temperature_Exterieure 							=  Temperature_Exterieure ;
+		Wifi_Buf_Emi.Reglage.Temperature_Exterieure 							=	 Etat_Automate_Suivi_Mur ;//=  Temperature_Exterieure ;
 		Wifi_Buf_Emi.Reglage.V_Batterie 													=  V_Batterie ;		
 		Wifi_Buf_Emi.Reglage.Etat_Sauvegarde 											=  Etat_Sauvegarde;								
 		Wifi_Buf_Emi.Reglage.Mode_Commande	 											=	 Mode_Commande ;											
