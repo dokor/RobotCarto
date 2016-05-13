@@ -42,6 +42,7 @@ static 	float	consigne ;
 
 //static T_Etat_Automate_Suivi_Mur  Etat_Automate_Suivi_Mur = SUIVI_MUR ;
 T_Etat_Automate_Suivi_Mur  Etat_Automate_Suivi_Mur = SUIVI_MUR ;
+T_Etat_Automate_Suivi_Mur  Etat_Automate_Angle_Droit = SUIVI_MUR ;
 
 
 float Guidage_Suivi_Mur (void)
@@ -112,7 +113,12 @@ float Guidage_Suivi_Mur (void)
 			Rplidar_Get_Distance ( &angle_droit ) ;
 			Rplidar_Get_Distance ( &angle_droit_moins ) ;			
 			Rplidar_Get_Distance ( &angle_droit_plus ) ;
-
+			
+			//Angle pour l'IA anti mur en angle droit
+			//rajouter une marge grace a un coef ? (genre a-5degrée / a+5degrée)
+			angle_dp_plus_alph = angle_droit_plus + 2.0;
+			angle_dp_moins_alph = angle_droit_plus - 2.0;
+			
 			Rplidar_Get_Distance ( &angle_dp_plus_alph ) ;			
 			Rplidar_Get_Distance ( &angle_dp_moins_alph ) ;
 			
@@ -121,12 +127,9 @@ float Guidage_Suivi_Mur (void)
 			Suivi_De_Mur.NotUsed4 = angle_droit_plus.Angle ;
 			Suivi_De_Mur.NotUsed5 = angle_droit_moins.Distance ;				// pour visu sur PC dans un premier temps
 			Suivi_De_Mur.NotUsed6 = angle_droit_moins.Angle ;		
-			Suivi_De_Mur.NotUsed7 = angle_droit.Distance ;		// pour visu sur PC dans un premier temps
+			Suivi_De_Mur.NotUsed7 = angle_droit.Distance ;							// pour visu sur PC dans un premier temps
 			Suivi_De_Mur.NotUsed8 = angle_droit.Angle ;
-			
-			Suivi_De_Mur.NotUsed9 = angle_droit_plus.Distance ;					// pour visu sur PC dans un premier temps
-			Suivi_De_Mur.NotUsed10 = angle_droit_plus.Angle ;
-			
+						
 #endif					
 			if  ( ConsigneManuelle.Vitesse == 0 )	 
 			{	/* Arrêt par l'opérateur */
@@ -146,16 +149,16 @@ float Guidage_Suivi_Mur (void)
 							et l'angle à 90 puis estimer la distance parcourue depuis l'échantillon et jusqu'au prochain échantillon 
 							qui sera présent au bout de 214 ms  soit une durée totale de 2* 214ms = 428 ms
 							exemple à la vitesse de 300 ms / s cela fait une distance d'environ 13 cm */
-							//float distance_a_parcourir = ConsigneManuelle.Vitesse * 0.50f ;
-							//if ( suivi_mur_droit == OUI )
-							//	angle_droit_plus.Angle = Suivi_De_Mur.Angle_Origine - ( atan ( distance_a_parcourir / angle_droit.Distance ) * 180.0f / 3.14159f );  /* 90° suivi de mur à droite */
-							//else
-							//	angle_droit_plus.Angle = Suivi_De_Mur.Angle_Origine + ( atan ( distance_a_parcourir / angle_droit.Distance ) * 180.0f / 3.14159f );	/* 270° suivi de mur à gauche */
+							float distance_a_parcourir = ConsigneManuelle.Vitesse * 0.50f ;
+							if ( suivi_mur_droit == OUI )
+								angle_droit_plus.Angle = Suivi_De_Mur.Angle_Origine - ( atan ( distance_a_parcourir / angle_droit.Distance ) * 180.0f / 3.14159f );  /* 90° suivi de mur à droite */
+							else
+								angle_droit_plus.Angle = Suivi_De_Mur.Angle_Origine + ( atan ( distance_a_parcourir / angle_droit.Distance ) * 180.0f / 3.14159f );	/* 270° suivi de mur à gauche */
 							
-							//Rplidar_Get_Distance ( &angle_droit_plus ) ;	
+							Rplidar_Get_Distance ( &angle_droit_plus ) ;	
 #ifdef	DEBUG_GUIDAGE 							
-							//Suivi_De_Mur.NotUsed3 = angle_droit_plus.Distance ;				// pour visu sur PC dans un premier temps
-							//Suivi_De_Mur.NotUsed4 = angle_droit_plus.Angle ;	
+							Suivi_De_Mur.NotUsed3 = angle_droit_plus.Distance ;				// pour visu sur PC dans un premier temps
+							Suivi_De_Mur.NotUsed4 = angle_droit_plus.Angle ;	
 #endif							
 							if ( angle_droit_plus.Distance > 3 * angle_droit_moins.Distance ) 
 							{  /* alors la il faut tourner avec une vitesse angulaire calculée selon le rayon = distance_a_90 */
@@ -169,7 +172,8 @@ float Guidage_Suivi_Mur (void)
 								}
 								Etat_Automate_Suivi_Mur = SUIVI_DEBUT_VIRAGE ;
 								break  ; 
-							}		
+							}	
+							
 						}
 						asservissement_request = VRAI ; 					
 						ptr_hypotenuse = &angle_droit_moins ;						
@@ -204,6 +208,36 @@ float Guidage_Suivi_Mur (void)
 					break ; 					
 				}
 						
+			switch ( Etat_Automate_Angle_Droit )
+				{
+				case SUIVI_MUR :
+					//Conditions pour tourner -> Le robot detecte l'angle droit 	
+					if (angle_dp_plus_alph.Distance <= angle_dp_moins_alph.Distance) //rajouter une marge grace a un coef ? (genre A < 1.2*B)
+							{
+								//Go vers l'etat preparation au Virage
+								Etat_Automate_Suivi_Mur = SUIVI_DEBUT_VIRAGE;
+							}
+					//Le robot ne detecte pas d'angle droit
+					else{
+						//pas de mur en face donc on continue suivi du mur ou tout droit
+					}
+					break;
+							
+				case SUIVI_DEBUT_VIRAGE :
+						//Revérification de la condition
+						if (angle_dp_plus_alph.Distance <= angle_dp_moins_alph.Distance)
+							{
+								//Go tourner
+								Etat_Automate_Suivi_Mur = SUIVI_VIRAGE;
+							}
+					break;
+							
+				case SUIVI_VIRAGE :
+						//Tourner (comme pour le suivi de mur que tu avais fait mais dans l'autre sens ? )
+						//Conditions d'arret pour tourner : 
+						// quand a+ devient plus petit que a-
+					break;
+				}
 			}
 		}
 		if ( asservissement_request == VRAI )
