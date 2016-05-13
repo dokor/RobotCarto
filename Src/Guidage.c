@@ -50,6 +50,9 @@ float Guidage_Suivi_Mur (void)
 	T_Angle_Distance  angle_droit ;
 	T_Angle_Distance  angle_droit_plus ;
 	T_Angle_Distance  angle_droit_moins ;
+	
+	T_Angle_Distance  angle_dp_plus_alph ;
+	T_Angle_Distance  angle_dp_moins_alph ;
 
 					float	erreur  ;
 	static 	float	distance_reprise ; 
@@ -108,14 +111,22 @@ float Guidage_Suivi_Mur (void)
 				
 			Rplidar_Get_Distance ( &angle_droit ) ;
 			Rplidar_Get_Distance ( &angle_droit_moins ) ;			
-			Rplidar_Get_Distance ( &angle_droit_plus ) ;	
+			Rplidar_Get_Distance ( &angle_droit_plus ) ;
+
+			Rplidar_Get_Distance ( &angle_dp_plus_alph ) ;			
+			Rplidar_Get_Distance ( &angle_dp_moins_alph ) ;
+			
 #ifdef	DEBUG_GUIDAGE 				
 			Suivi_De_Mur.NotUsed3 = angle_droit_plus.Distance ;					// pour visu sur PC dans un premier temps
 			Suivi_De_Mur.NotUsed4 = angle_droit_plus.Angle ;
 			Suivi_De_Mur.NotUsed5 = angle_droit_moins.Distance ;				// pour visu sur PC dans un premier temps
 			Suivi_De_Mur.NotUsed6 = angle_droit_moins.Angle ;		
 			Suivi_De_Mur.NotUsed7 = angle_droit.Distance ;		// pour visu sur PC dans un premier temps
-			Suivi_De_Mur.NotUsed8 = angle_droit.Angle ;					
+			Suivi_De_Mur.NotUsed8 = angle_droit.Angle ;
+			
+			Suivi_De_Mur.NotUsed9 = angle_droit_plus.Distance ;					// pour visu sur PC dans un premier temps
+			Suivi_De_Mur.NotUsed10 = angle_droit_plus.Angle ;
+			
 #endif					
 			if  ( ConsigneManuelle.Vitesse == 0 )	 
 			{	/* Arrêt par l'opérateur */
