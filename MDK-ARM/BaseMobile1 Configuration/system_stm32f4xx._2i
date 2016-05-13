@@ -1,0 +1,5 @@
+-c --cpu Cortex-M4.fp -D__EVAL -g -O2 --apcs=interwork --split_sections -I..\Inc -I..\Drivers\STM32F4xx_HAL_Driver\Inc -I..\Drivers\STM32F4xx_HAL_Driver\Inc\Legacy -I..\Drivers\CMSIS\Include -I..\Drivers\CMSIS\Device\ST\STM32F4xx\Include --C99
+-I D:\keil_v474\ARM\RV31\INC
+-I D:\keil_v474\ARM\CMSIS\Include
+-DUSE_HAL_DRIVER -DSTM32F407xx
+-o "basemobile1 configuration\system_stm32f4xx.o" --omf_browse "basemobile1 configuration\system_stm32f4xx.crf" --depend "basemobile1 configuration\system_stm32f4xx.d" --feedback "BaseMobile1 Configuration\BaseMobile1 Configuration.fed" "..\Drivers\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c"
