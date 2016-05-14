@@ -116,7 +116,7 @@ float Guidage_Suivi_Mur (void)
 			
 			//Angle pour l'IA anti mur en angle droit
 			//rajouter une marge grace a un coef ? (genre a-5degrée / a+5degrée)
-			angle_dp_plus_alph = angle_droit_plus + 2.0;
+			angle_dp_plus_alph = angle_droit_plus + 5.0; //angle de devant plus grand pour pouvoir toucher le mur plus tot et donc commencer a tourner un peu plus tot
 			angle_dp_moins_alph = angle_droit_plus - 2.0;
 			
 			Rplidar_Get_Distance ( &angle_dp_plus_alph ) ;			
@@ -211,12 +211,14 @@ float Guidage_Suivi_Mur (void)
 			switch ( Etat_Automate_Angle_Droit )
 				{
 				case SUIVI_MUR :
-					//Conditions pour tourner -> Le robot detecte l'angle droit 	
+					//Conditions pour tourner ->
+					//Le robot detecte l'angle droit 	
 					if (angle_dp_plus_alph.Distance <= angle_dp_moins_alph.Distance) //rajouter une marge grace a un coef ? (genre A < 1.2*B)
 							{
 								//Go vers l'etat preparation au Virage
 								Etat_Automate_Suivi_Mur = SUIVI_DEBUT_VIRAGE;
 							}
+							
 					//Le robot ne detecte pas d'angle droit
 					else{
 						//pas de mur en face donc on continue suivi du mur ou tout droit
@@ -233,9 +235,17 @@ float Guidage_Suivi_Mur (void)
 					break;
 							
 				case SUIVI_VIRAGE :
+						if (angle_dp_plus_alph.Distance == angle_droit.Distance)
+						{
+							//Theoriquement, c'est le moment ou le robot a deja tourné a 30-40%
+							//et donc que il est incliné du degrée angle_dp_plus_alph.degrée vers le mur qu'on souhaite suivre aprés
+						}						
+				
 						//Tourner (comme pour le suivi de mur que tu avais fait mais dans l'autre sens ? )
 						//Conditions d'arret pour tourner : 
-						// quand a+ devient plus petit que a-
+						// quand a+ devient egale a a- -> normalement correspond a la moitié du virage
+						// quand a+ devient plus grand que a- ->
+				
 					break;
 				}
 			}
