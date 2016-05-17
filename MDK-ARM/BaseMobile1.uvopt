@@ -832,10 +832,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>6</ColumnNumber>
+      <ColumnNumber>11</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>465</TopLine>
-      <CurrentLine>598</CurrentLine>
+      <TopLine>419</TopLine>
+      <CurrentLine>467</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\Src\Rplidar.c</PathWithFileName>
       <FilenameWithoutPath>Rplidar.c</FilenameWithoutPath>
@@ -880,10 +880,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>14</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>198</TopLine>
-      <CurrentLine>247</CurrentLine>
+      <TopLine>190</TopLine>
+      <CurrentLine>235</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\Src\Guidage.c</PathWithFileName>
       <FilenameWithoutPath>Guidage.c</FilenameWithoutPath>
